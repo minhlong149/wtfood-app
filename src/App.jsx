@@ -68,20 +68,32 @@ function App() {
   );
 
   return (
-    <div>
-      <h1>{`${dish.name} 🔮 ${correctIngredients.length}/${dish.ingredients}`}</h1>
-      <button onClick={() => getRandomDish()}>Change dish</button>
-
-      <p>
-        Guess correct:{" "}
-        {correctIngredients.map((ingredient) => ingredient.name).join(", ")}
-      </p>
-
-      {remainingIngredients.map((ingredient) => (
-        <button key={ingredient.id} onClick={() => checkRecipe(ingredient.id)}>
-          {ingredient.name}
+    <div className="flex flex-col gap-4 m-4">
+      <div className="flex items-center justify-center gap-2 text-3xl ">
+        <button onClick={() => getRandomDish()} title="Get new dish">
+          🔄
         </button>
-      ))}
+        <h1 className="font-bold text-center">{`${dish.name} 🔮 ${correctIngredients.length}/${dish.ingredients} ❌ ${wrongIngredientIds.length}`}</h1>
+      </div>
+
+      {correctIngredients.length > 0 && (
+        <p className="text-center">
+          Guess correct:{" "}
+          {correctIngredients.map((ingredient) => ingredient.name).join(", ")}
+        </p>
+      )}
+
+      <div>
+        {remainingIngredients.map((ingredient) => (
+          <button
+            className="rounded-full bg-gray-200 hover:bg-gray-300 px-4 py-2 m-1"
+            onClick={() => checkRecipe(ingredient.id)}
+            key={ingredient.id}
+          >
+            {ingredient.name}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
