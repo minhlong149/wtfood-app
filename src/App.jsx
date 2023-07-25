@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import * as dishService from "./services/dishes";
 import * as ingredientService from "./services/ingredients";
@@ -9,10 +9,12 @@ function App() {
   const [correctIngredientIds, setCorrectIngredientIds] = useState([]);
   const [wrongIngredientIds, setWrongIngredientIds] = useState([]);
   const [dish, setDish] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   const getAllIngredients = async () => {
     try {
       const ingredients = await ingredientService.getAllIngredients();
+      ingredients.sort((a, b) => a.name.localeCompare(b.name));
       setIngredients(ingredients);
     } catch (error) {
       console.error(error);
@@ -52,6 +54,7 @@ function App() {
       } else {
         setWrongIngredientIds([...wrongIngredientIds, ingredientId]);
       }
+      setSearchQuery("");
     } catch (error) {
       console.error(error);
     }
@@ -63,6 +66,7 @@ function App() {
 
   const remainingIngredients = ingredients.filter(
     (ingredient) =>
+      ingredient.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       !correctIngredientIds.includes(ingredient.id) &&
       !wrongIngredientIds.includes(ingredient.id)
   );
@@ -82,6 +86,14 @@ function App() {
           {correctIngredients.map((ingredient) => ingredient.name).join(", ")}
         </p>
       )}
+
+      <input
+        className="border border-gray-300 rounded-full px-4 py-2 m-1"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search for ingredients"
+        type="search"
+      />
 
       <div>
         {remainingIngredients.map((ingredient) => (
