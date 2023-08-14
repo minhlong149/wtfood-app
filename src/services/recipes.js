@@ -1,7 +1,7 @@
 export async function checkRecipe(ingredientId, dishId) {
   try {
     const response = await fetch(
-      `/api/recipes?ingredient=${ingredientId}&dish=${dishId}`
+      `/api/dishes/${dishId}/ingredients/${ingredientId}`
     );
     const data = await response.json();
     return data;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import * as dishService from "./services/dishes";
 import * as ingredientService from "./services/ingredients";
@@ -13,7 +13,7 @@ function App() {
 
   const getAllIngredients = async () => {
     try {
-      const ingredients = await ingredientService.getAllIngredients();
+      const { ingredients } = await ingredientService.getAllIngredients();
       ingredients.sort((a, b) => a.name.localeCompare(b.name));
       setIngredients(ingredients);
     } catch (error) {
@@ -27,8 +27,11 @@ function App() {
 
   const getRandomDish = async () => {
     try {
-      const dish = await dishService.getRandomDish();
-      setDish(dish);
+      const response = await dishService.getRandomDish();
+      setDish({
+        ...response.dish,
+        ingredients: response.ingredients,
+      });
       setCorrectIngredientIds([]);
       setWrongIngredientIds([]);
     } catch (error) {
@@ -49,7 +52,7 @@ function App() {
   const checkRecipe = async (ingredientId) => {
     try {
       const recipe = await recipeService.checkRecipe(ingredientId, dish.id);
-      if (recipe.correct) {
+      if (recipe.exist) {
         setCorrectIngredientIds([...correctIngredientIds, ingredientId]);
       } else {
         setWrongIngredientIds([...wrongIngredientIds, ingredientId]);
