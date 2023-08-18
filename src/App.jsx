@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 
+import { Ingredients } from "./components/Ingredients";
+import { Search } from "./components/Search";
+
 import * as dishService from "./services/dishes";
 import * as ingredientService from "./services/ingredients";
 import * as recipeService from "./services/recipes";
@@ -54,10 +57,13 @@ function App() {
       const recipe = await recipeService.checkRecipe(ingredientId, dish.id);
       if (recipe.exist) {
         setCorrectIngredientIds([...correctIngredientIds, ingredientId]);
+        setSearchQuery("");
       } else {
         setWrongIngredientIds([...wrongIngredientIds, ingredientId]);
+        if (remainingIngredients.length < 2) {
+          setSearchQuery("");
+        }
       }
-      setSearchQuery("");
     } catch (error) {
       console.error(error);
     }
@@ -67,12 +73,15 @@ function App() {
     correctIngredientIds.includes(ingredient.id)
   );
 
-  const remainingIngredients = ingredients.filter(
-    (ingredient) =>
-      ingredient.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !correctIngredientIds.includes(ingredient.id) &&
-      !wrongIngredientIds.includes(ingredient.id)
-  );
+  const remainingIngredients =
+    searchQuery.length < 2
+      ? []
+      : ingredients.filter(
+          (ingredient) =>
+            ingredient.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+            !correctIngredientIds.includes(ingredient.id) &&
+            !wrongIngredientIds.includes(ingredient.id)
+        );
 
   return (
     <div className="flex flex-col gap-4 m-4">
@@ -90,25 +99,12 @@ function App() {
         </p>
       )}
 
-      <input
-        className="border border-gray-300 rounded-full px-4 py-2 m-1"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search for ingredients"
-        type="search"
-      />
+      <Search value={searchQuery} handleOnChange={setSearchQuery} />
 
-      <div>
-        {remainingIngredients.map((ingredient) => (
-          <button
-            className="rounded-full bg-gray-200 hover:bg-gray-300 px-4 py-2 m-1"
-            onClick={() => checkRecipe(ingredient.id)}
-            key={ingredient.id}
-          >
-            {ingredient.name}
-          </button>
-        ))}
-      </div>
+      <Ingredients
+        ingredients={remainingIngredients}
+        checkRecipe={checkRecipe}
+      />
     </div>
   );
 }
