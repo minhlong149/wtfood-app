@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
 
-import { Ingredients } from "./components/Ingredients";
+import { Dishes } from "./Dishes";
+import { Login } from "./Login";
+
+import { CorrectGuess } from "./components/CorrectGuess";
+import { GameplayHeader } from "./components/GameplayHeader";
+import { IngredientList } from "./components/IngredientList";
+import { OptionHeader } from "./components/OptionHeader";
 import { Search } from "./components/Search";
 
 import * as dishService from "./services/dishes";
 import * as ingredientService from "./services/ingredients";
 import * as recipeService from "./services/recipes";
+import * as userService from "./services/users";
 
 function App() {
   const [ingredients, setIngredients] = useState([]);
@@ -13,6 +20,12 @@ function App() {
   const [wrongIngredientIds, setWrongIngredientIds] = useState([]);
   const [dish, setDish] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  const [showAllDishes, setShowAllDishes] = useState(false);
 
   const getAllIngredients = async () => {
     try {
@@ -28,15 +41,19 @@ function App() {
     getAllIngredients();
   }, []);
 
+  const updateDish = (dishResponse) => {
+    setDish({
+      ...dishResponse.dish,
+      ingredients: dishResponse.ingredients,
+    });
+    setCorrectIngredientIds([]);
+    setWrongIngredientIds([]);
+  };
+
   const getRandomDish = async () => {
     try {
       const response = await dishService.getRandomDish();
-      setDish({
-        ...response.dish,
-        ingredients: response.ingredients,
-      });
-      setCorrectIngredientIds([]);
-      setWrongIngredientIds([]);
+      updateDish(response);
     } catch (error) {
       console.error(error);
     }
@@ -48,6 +65,7 @@ function App() {
 
   useEffect(() => {
     if (correctIngredientIds.length === dish.ingredients) {
+      alert("You win!");
       getRandomDish();
     }
   }, [correctIngredientIds]);
@@ -83,29 +101,65 @@ function App() {
             !wrongIngredientIds.includes(ingredient.id)
         );
 
-  return (
-    <div className="flex flex-col gap-4 m-4">
-      <div className="flex items-center justify-center gap-2 text-3xl ">
-        <button onClick={() => getRandomDish()} title="Get new dish">
-          🔄
-        </button>
-        <h1 className="font-bold text-center">{`${dish.name} 🔮 ${correctIngredients.length}/${dish.ingredients} ❌ ${wrongIngredientIds.length}`}</h1>
-      </div>
+  const headerText =
+    dish.id !== undefined
+      ? `${dish.name} 🔮 ${correctIngredients.length}/${dish.ingredients} ❌ ${wrongIngredientIds.length}`
+      : "What the Food";
 
-      {correctIngredients.length > 0 && (
-        <p className="text-center">
-          Guess correct:{" "}
-          {correctIngredients.map((ingredient) => ingredient.name).join(", ")}
-        </p>
-      )}
+  const handleLogin = async (e) => {
+    try {
+      e.preventDefault();
+      const username = e.target.username.value;
+      const password = e.target.password.value;
 
-      <Search value={searchQuery} handleOnChange={setSearchQuery} />
+      const user = await userService.login(username, password);
 
-      <Ingredients
-        ingredients={remainingIngredients}
-        checkRecipe={checkRecipe}
+      userService.setToken(user.token);
+      setShowLogin(false);
+      setLoggedIn(true);
+      e.target.reset();
+    } catch (error) {
+      console.error(error);
+      setLoginError(error.message);
+      setTimeout(() => setLoginError(""), 7000);
+    }
+  };
+
+  return showAllDishes ? (
+    <Dishes setShowAllDishes={setShowAllDishes} updateDish={updateDish} />
+  ) : (
+    <>
+      <main className="flex flex-col gap-4 m-4">
+        <header className="flex items-center justify-center gap-2 text-3xl">
+          <OptionHeader
+            loggedIn={loggedIn}
+            setShowLogin={setShowLogin}
+            setShowAllDishes={setShowAllDishes}
+          />
+          <GameplayHeader
+            getRandomDish={getRandomDish}
+            headerText={headerText}
+          />
+        </header>
+        <CorrectGuess correctIngredients={correctIngredients} />
+        <Search
+          value={searchQuery}
+          handleOnChange={setSearchQuery}
+          placeholder="search for ingredients"
+        />
+        <IngredientList
+          ingredients={remainingIngredients}
+          checkRecipe={checkRecipe}
+        />
+      </main>
+
+      <Login
+        showLogin={showLogin}
+        handleLogin={handleLogin}
+        loginError={loginError}
+        setShowLogin={setShowLogin}
       />
-    </div>
+    </>
   );
 }
 
